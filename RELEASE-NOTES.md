@@ -1,5 +1,21 @@
 # Superpowers Release Notes
 
+## v5.0.3 (Unreleased)
+
+### Improvements
+
+**Auto-proceed workflow - Reduced user confirmation requirements**
+
+- Updated `brainstorming` skill to automatically proceed after presenting design (removed "get user approval after each section" gate)
+- Updated `brainstorming` skill to automatically proceed after spec review passes (removed "wait for user review" gate)
+- Updated `finishing-a-development-branch` skill to automatically select the appropriate completion option based on project context:
+  - Detects if branch is already pushed or if remote exists → auto-creates Pull Request
+  - Detects if no remote configured → auto-merges locally
+  - Users can still override by responding with a preference (1-4)
+  - Safety preserved: destructive actions (discard) still require typed confirmation
+- Workflow now presents recommendations and proceeds automatically, while keeping users informed of actions taken
+- This change addresses user feedback requesting fewer interruptions for confirmations on recommended actions
+
 ## v5.0.2 (2026-03-11)
 
 ### Zero-Dependency Brainstorm Server
