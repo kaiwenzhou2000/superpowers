@@ -1,15 +1,15 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation is complete, all tests pass, and you need to integrate the work - automatically selects and executes the appropriate workflow (merge, PR, or local completion)
 ---
 
 # Finishing a Development Branch
 
 ## Overview
 
-Guide completion of development work by presenting clear options and handling chosen workflow.
+Guide completion of development work by automatically selecting the appropriate workflow based on project context.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Auto-select best option → Execute workflow → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -46,22 +46,39 @@ git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
 
 Or ask: "This branch split from main - is that correct?"
 
-### Step 3: Present Options
+### Step 3: Auto-Select Completion Option
 
-Present exactly these 4 options:
+Automatically determine the best completion option based on context:
 
+**Decision Logic:**
+
+1. **Check if branch is already pushed:**
+   ```bash
+   git branch -vv | grep $(git branch --show-current)
+   ```
+
+2. **Check if remote exists:**
+   ```bash
+   git remote -v | grep origin
+   ```
+
+3. **Auto-select based on context:**
+   - If branch is already pushed → **Option 2: Create PR** (user expects to share work)
+   - If remote exists and branch is not pushed → **Option 2: Create PR** (standard collaborative workflow)
+   - If no remote exists → **Option 1: Merge locally** (local-only project)
+
+**Notify user of auto-selected option:**
 ```
-Implementation complete. What would you like to do?
+Implementation complete. Auto-selecting completion option based on context:
 
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+→ Creating Pull Request (branch is ready for collaborative review)
 
-Which option?
+[or]
+
+→ Merging locally to <base-branch> (local project, no remote configured)
 ```
 
-**Don't add explanation** - keep options concise.
+**User can still choose differently:** If the user immediately responds with a preference (1-4), honor their choice instead.
 
 ### Step 4: Execute Choice
 
@@ -151,44 +168,47 @@ git worktree remove <worktree-path>
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
+| Context | Auto-Selected Action | Merge | Push | Keep Worktree | Cleanup Branch |
+|---------|---------------------|-------|------|---------------|----------------|
+| Branch already pushed | Create PR (Option 2) | - | ✓ | ✓ | - |
+| Remote exists, not pushed | Create PR (Option 2) | - | ✓ | ✓ | - |
+| No remote configured | Merge locally (Option 1) | ✓ | - | - | ✓ |
+
+**Manual Override:** User can still choose Options 3 (keep as-is) or 4 (discard) by responding immediately.
 
 ## Common Mistakes
 
 **Skipping test verification**
 - **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
+- **Fix:** Always verify tests before auto-selecting option
 
-**Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
+**Wrong context detection**
+- **Problem:** Choose merge when user expects PR, or vice versa
+- **Fix:** Check both branch tracking and remote existence, notify user of choice
 
 **Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
+- **Problem:** Remove worktree when might need it (PR workflow)
+- **Fix:** Only cleanup for merge locally workflow
 
 **No confirmation for discard**
 - **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+- **Fix:** Still require typed "discard" confirmation (safety preserved)
 
 ## Red Flags
 
 **Never:**
 - Proceed with failing tests
 - Merge without verifying tests on result
-- Delete work without confirmation
+- Delete work without confirmation (Option 4 still requires typed "discard")
 - Force-push without explicit request
+- Auto-select discard option (always requires user confirmation)
 
 **Always:**
-- Verify tests before offering options
-- Present exactly 4 options
-- Get typed confirmation for Option 4
-- Clean up worktree for Options 1 & 4 only
+- Verify tests before auto-selecting option
+- Detect project context (remote status, branch tracking)
+- Notify user of auto-selected action with reasoning
+- Allow immediate user override if they respond with preference
+- Get typed confirmation for Option 4 (discard)
 
 ## Integration
 
